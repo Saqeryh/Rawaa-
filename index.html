@@ -1,1 +1,608 @@
 
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThrombiX - Professional Prototype</title>
+    
+    <!-- Tailwind CSS (مكتبة التنسيق والألوان) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- إعدادات ألوان مخصصة مطابقة تماماً للصورة المرفقة -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        appBg: '#f3f2fa',       /* لون خلفية التطبيق */
+                        textMain: '#2d264b',    /* لون النصوص الداكنة */
+                        textMuted: '#9a94a8',   /* لون النصوص الرمادية */
+                        primary: '#8a74f9',     /* اللون البنفسجي الأساسي */
+                        primaryLight: '#ebe7ff',/* البنفسجي الفاتح للخلفيات */
+                        accentYellow: '#f9d85e',/* اللون الأصفر للتنبيهات */
+                        danger: '#ff6b6b'       /* اللون الأحمر للطوارئ */
+                    },
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                        num: ['Poppins', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 25px -5px rgba(138, 116, 249, 0.15)',
+                        'floating': '0 20px 40px -10px rgba(138, 116, 249, 0.25)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Chart.js (مكتبة الرسوم البيانية) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- FontAwesome (مكتبة الأيقونات) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            background-color: #e2e8f0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            background-image: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            font-family: 'Cairo', sans-serif;
+        }
+        
+        /* حاوية الهاتف المحمول */
+        .mobile-wrapper {
+            width: 375px;
+            height: 812px;
+            background-color: #f3f2fa; /* لون الخلفية من الصورة */
+            border-radius: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3), inset 0 0 0 8px #ffffff;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* إخفاء شريط التمرير الجانبي */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* حركة التنقل بين الشاشات */
+        .screen { display: none; animation: fadeIn 0.3s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* الكروت والستايلات المخصصة */
+        .tag-pill { 
+            background-color: #ebe7ff; 
+            color: #8a74f9; 
+            padding: 4px 12px; 
+            border-radius: 20px; 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 4px;
+        }
+        .card { 
+            background-color: #ffffff; 
+            border-radius: 28px; /* نفس درجة الدوران بالصورة */
+            padding: 20px; 
+            box-shadow: 0 15px 40px -15px rgba(138, 116, 249, 0.15); 
+        }
+        
+        /* أزرار القائمة السفلية */
+        .nav-item { 
+            color: #9a94a8; 
+            transition: all 0.3s; 
+            position: relative; 
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+        }
+        .nav-item.active { color: #8a74f9; }
+        
+        /* الزر الأوسط البارز */
+        .nav-scan-btn {
+            background-color: #8a74f9;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 20px rgba(138, 116, 249, 0.4);
+            transform: translateY(-10px);
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: transform 0.2s;
+        }
+        .nav-scan-btn:hover { transform: translateY(-12px) scale(1.05); }
+
+        /* نبض الطوارئ */
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 107, 107, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+        }
+        .danger-pulse { animation: pulse-red 2s infinite; }
+    </style>
+</head>
+<body class="text-textMain antialiased">
+
+    <div class="mobile-wrapper">
+        
+        <!-- المحتوى الداخلي للشاشات -->
+        <div class="flex-1 overflow-y-auto no-scrollbar pt-12 pb-24 px-6 relative">
+            
+            <!-- ================= SCREEN 1: DASHBOARD (تطابق الشاشة اليسرى) ================= -->
+            <div id="screen-home" class="screen active">
+                <!-- الترويسة -->
+                <div class="flex justify-between items-center mb-6">
+                    <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                        <img alt="User" class="w-full h-full object-cover" src="https://placehold.co/100x100/8a74f9/ffffff?text=U">
+                    </div>
+                    <div class="text-center">
+                        <p class="font-bold text-lg font-num text-textMain" dir="ltr">Today 14, June</p>
+                    </div>
+                    <div class="w-10 h-10 flex items-center justify-center text-textMain text-xl">
+                        <i class="fa-regular fa-bell"></i>
+                    </div>
+                </div>
+
+                <!-- الكرت الأساسي: D-dimer (بديل للـ Glucose في الصورة) -->
+                <div class="card mb-5 relative overflow-hidden transition-all duration-500" id="mainDdimerCard">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center gap-2 text-primary font-semibold text-sm">
+                            <i class="fa-solid fa-droplet text-xs"></i>
+                            <span>D-dimer (تخثر)</span>
+                        </div>
+                        <span class="text-xs text-textMuted font-num" dir="ltr">5:05 pm</span>
+                    </div>
+                    
+                    <p class="text-xs text-textMuted mb-2">Latest measurement</p>
+                    
+                    <div class="flex justify-between items-end mt-2">
+                        <div>
+                            <div class="flex items-baseline gap-1" dir="ltr">
+                                <span class="text-[3.5rem] leading-none font-bold font-num text-textMain" id="mainDdimer">240</span>
+                                <span class="text-textMuted text-sm font-num">ng/mL</span>
+                            </div>
+                            <div class="mt-1 flex items-center gap-2">
+                                <span class="text-accentYellow font-bold text-sm" id="riskLabel">Safe level! <i class="fa-solid fa-circle-info text-xs"></i></span>
+                            </div>
+                        </div>
+                        <div class="text-right font-num text-sm">
+                            <p class="text-xs text-textMuted mb-1">Last scan</p>
+                            <p class="font-bold text-textMain">220 <span class="text-[10px]">ng/mL</span></p>
+                            <p class="text-xs text-textMuted mt-2">Growth</p>
+                            <p class="text-textMain font-bold">Negative</p>
+                        </div>
+                    </div>
+                    
+                    <!-- أزرار الإجراءات داخل الكرت -->
+                    <div class="flex gap-2 mt-6">
+                        <button class="bg-appBg hover:bg-primaryLight text-textMain hover:text-primary text-xs px-4 py-2.5 rounded-2xl transition-colors font-semibold flex-1 flex justify-center items-center gap-2"><i class="fa-regular fa-clock"></i> السجل</button>
+                        <button class="bg-appBg hover:bg-primaryLight text-textMain hover:text-primary text-xs px-4 py-2.5 rounded-2xl transition-colors font-semibold flex-1 flex justify-center items-center gap-2"><i class="fa-solid fa-pills"></i> الجرعات</button>
+                        <button class="bg-primary text-white w-10 h-10 rounded-2xl flex justify-center items-center shadow-md"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+
+                <!-- كرت التحليل الثانوي (TAT) -->
+                <div class="card mb-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-2 text-primary font-semibold text-sm">
+                            <i class="fa-solid fa-dna text-xs"></i>
+                            <span>Thrombin (TAT)</span>
+                        </div>
+                        <i class="fa-solid fa-check text-textMuted text-xs bg-appBg p-1.5 rounded-full"></i>
+                    </div>
+                    
+                    <div class="flex items-center justify-between py-3 border-b border-appBg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-[#fff4de] text-accentYellow rounded-xl flex items-center justify-center text-lg"><i class="fa-solid fa-vial"></i></div>
+                            <div>
+                                <p class="font-bold text-sm">الحالة الحالية</p>
+                                <p class="text-xs text-textMuted">معدل الانقسام</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold font-num">2.1 µg/L</span>
+                            <i class="fa-solid fa-check text-white bg-primary p-1 rounded-full text-[10px]"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between py-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-primaryLight text-primary rounded-xl flex items-center justify-center text-lg"><i class="fa-solid fa-chart-line"></i></div>
+                            <div>
+                                <p class="font-bold text-sm">P-selectin</p>
+                                <p class="text-xs text-textMuted">نشاط الصفائح</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold font-num">24 ng/mL</span>
+                            <i class="fa-solid fa-check text-textMuted bg-appBg p-1 rounded-full text-[10px]"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= SCREEN 2: ANALYSIS & CHART (تطابق الشاشة الوسطى) ================= -->
+            <div id="screen-status" class="screen">
+                
+                <div class="text-center mt-6 mb-8 relative">
+                    <!-- الدائرة المضيئة الكبيرة في المنتصف -->
+                    <div class="w-32 h-32 mx-auto rounded-full flex items-center justify-center relative z-10 border-[3px] border-dashed border-primaryLight transition-all duration-500" id="centerIconBorder">
+                        <div class="w-24 h-24 bg-primaryLight rounded-full flex items-center justify-center transition-all duration-500" id="centerIconBg">
+                            <i class="fa-solid fa-droplet text-5xl text-primary transition-colors duration-500" id="centerIcon"></i>
+                            <i class="fa-solid fa-check absolute bottom-6 right-6 bg-textMain text-white rounded-full p-1 text-xs border-2 border-appBg transition-opacity duration-500" id="centerCheck"></i>
+                        </div>
+                    </div>
+                    <h2 class="text-xl font-bold mt-4 transition-colors duration-500" id="analysisTitle">Stable!</h2>
+                    <p class="text-textMuted text-xs font-num mt-1">5:05 pm</p>
+                </div>
+
+                <div class="card relative pt-8 pb-4 px-4">
+                    <i class="fa-solid fa-circle-info absolute top-4 right-4 text-primary"></i>
+                    
+                    <div class="text-center mb-6">
+                        <div class="flex justify-center items-baseline gap-1" dir="ltr">
+                            <span class="text-5xl font-bold font-num text-textMain transition-colors duration-500" id="chartValue">240</span>
+                            <span class="text-textMuted text-sm font-num">ng/mL</span>
+                        </div>
+                        <p class="text-accentYellow font-bold text-sm mt-1 transition-colors duration-500" id="chartLabel">Safe level! <i class="fa-solid fa-arrow-trend-down text-xs"></i></p>
+                    </div>
+
+                    <!-- منطقة الرسم البياني -->
+                    <div class="h-40 w-full mb-4 relative">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+
+                    <div class="flex gap-2 mt-4">
+                        <button class="bg-appBg hover:bg-primaryLight text-textMain text-xs px-4 py-2.5 rounded-2xl font-semibold flex-1 flex justify-center items-center gap-2"><i class="fa-solid fa-notes-medical"></i> تقرير AI</button>
+                        <button class="bg-appBg hover:bg-primaryLight text-textMain text-xs px-4 py-2.5 rounded-2xl font-semibold flex-1 flex justify-center items-center gap-2"><i class="fa-solid fa-share-nodes"></i> مشاركة</button>
+                    </div>
+                </div>
+
+                <!-- زر المحاكاة الخاص بالهاكاثون -->
+                <button onclick="triggerEmergency()" id="demoBtn" class="mt-6 w-full bg-white text-textMain font-bold py-3.5 px-6 rounded-2xl shadow-sm text-sm border-2 border-transparent hover:border-primary transition-all flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-bolt text-primary"></i> محاكاة خطورة جلطة (للعرض)
+                </button>
+            </div>
+
+            <!-- ================= SCREEN 3: PROFILE & SETTINGS (تطابق الشاشة اليمنى) ================= -->
+            <div id="screen-menu" class="screen">
+                
+                <div class="flex items-center gap-4 mb-6 mt-4 bg-white p-4 rounded-3xl shadow-soft">
+                    <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-primaryLight">
+                        <img alt="User" class="w-full h-full object-cover" src="https://placehold.co/100x100/8a74f9/ffffff?text=A">
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-textMain font-num">Ahmad Ali, 45 y/o</h2>
+                        <p class="text-textMuted text-xs">High-risk Cardiovascular</p>
+                    </div>
+                    <i class="fa-regular fa-bell ml-auto text-textMuted text-xl"></i>
+                </div>
+
+                <!-- البانر البنفسجي المضيء -->
+                <div class="bg-primary text-white rounded-[28px] p-6 shadow-floating mb-6 relative overflow-hidden flex items-center justify-between">
+                    <div class="absolute -right-10 -top-10 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
+                    <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-black opacity-10 rounded-full blur-xl"></div>
+                    
+                    <div class="relative z-10 w-2/3">
+                        <h3 class="font-bold text-base mb-1">متصل بطبيبك!</h3>
+                        <p class="text-xs opacity-90 leading-relaxed mb-3">بياناتك الحيوية تُشارك لحظياً عبر منصة صحتي.</p>
+                        <span class="text-xs font-bold underline cursor-pointer">اقرأ المزيد</span>
+                    </div>
+                    <div class="relative z-10 w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30">
+                        <i class="fa-solid fa-user-doctor text-3xl"></i>
+                    </div>
+                </div>
+
+                <!-- قائمة الإعدادات (نفس تنسيق الصورة) -->
+                <div class="card p-2 mb-4">
+                    <div class="flex items-center justify-between p-3 hover:bg-appBg rounded-2xl cursor-pointer transition-colors">
+                        <div class="flex items-center gap-4">
+                            <i class="fa-regular fa-calendar-lines text-primary w-5 text-center"></i>
+                            <span class="font-semibold text-sm">السجل الطبي</span>
+                        </div>
+                        <i class="fa-solid fa-arrow-left text-textMuted text-xs"></i>
+                    </div>
+                    <div class="flex items-center justify-between p-3 hover:bg-appBg rounded-2xl cursor-pointer transition-colors">
+                        <div class="flex items-center gap-4">
+                            <i class="fa-solid fa-apple-whole text-primary w-5 text-center"></i>
+                            <span class="font-semibold text-sm">توصيات التغذية</span>
+                        </div>
+                        <i class="fa-solid fa-arrow-left text-textMuted text-xs"></i>
+                    </div>
+                    <div class="flex items-center justify-between p-3 hover:bg-appBg rounded-2xl cursor-pointer transition-colors">
+                        <div class="flex items-center gap-4">
+                            <i class="fa-solid fa-chart-column text-primary w-5 text-center"></i>
+                            <span class="font-semibold text-sm">المراقبة المستمرة</span>
+                        </div>
+                        <i class="fa-solid fa-arrow-left text-textMuted text-xs"></i>
+                    </div>
+                    <div class="flex items-center justify-between p-3 hover:bg-appBg rounded-2xl cursor-pointer transition-colors">
+                        <div class="flex items-center gap-4">
+                            <i class="fa-solid fa-book-medical text-primary w-5 text-center"></i>
+                            <span class="font-semibold text-sm">قاعدة المعرفة</span>
+                        </div>
+                        <i class="fa-solid fa-arrow-left text-textMuted text-xs"></i>
+                    </div>
+                </div>
+
+                <div class="card p-2 mb-4">
+                    <div class="flex items-center justify-between p-3 hover:bg-appBg rounded-2xl cursor-pointer transition-colors">
+                        <div class="flex items-center gap-4">
+                            <i class="fa-regular fa-bell text-accentYellow w-5 text-center"></i>
+                            <span class="font-semibold text-sm">التنبيهات</span>
+                        </div>
+                        <i class="fa-solid fa-arrow-left text-textMuted text-xs"></i>
+                    </div>
+                    <div class="flex items-center justify-between p-3 hover:bg-appBg rounded-2xl cursor-pointer transition-colors">
+                        <div class="flex items-center gap-4">
+                            <i class="fa-solid fa-gear text-[#4a90e2] w-5 text-center"></i>
+                            <span class="font-semibold text-sm">الإعدادات</span>
+                        </div>
+                        <i class="fa-solid fa-arrow-left text-textMuted text-xs"></i>
+                    </div>
+                    <div class="flex items-center justify-between p-3 hover:bg-red-50 rounded-2xl cursor-pointer transition-colors">
+                        <div class="flex items-center gap-4">
+                            <i class="fa-solid fa-arrow-right-from-bracket text-textMuted w-5 text-center"></i>
+                            <span class="font-semibold text-sm">تسجيل الخروج</span>
+                        </div>
+                        <i class="fa-solid fa-arrow-left text-textMuted text-xs"></i>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= BOTTOM NAVIGATION ================= -->
+        <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[40px] px-8 pb-6 pt-4 flex justify-between items-center z-20" style="box-shadow: 0 -10px 40px rgba(138, 116, 249, 0.08);">
+            <button onclick="switchTab('screen-home', 'nav-home')" class="nav-item active text-xl" id="nav-home"><i class="fa-solid fa-house-chimney-window"></i></button>
+            <button onclick="switchTab('screen-status', 'nav-scan')" class="nav-scan-btn" id="nav-scan">
+                <i class="fa-solid fa-fingerprint"></i>
+            </button>
+            <button onclick="switchTab('screen-menu', 'nav-menu')" class="nav-item text-xl" id="nav-menu"><i class="fa-solid fa-grip"></i></button>
+        </div>
+
+        <!-- ================= INTERVENTION MODAL (التدخل البشري) ================= -->
+        <div id="alertModal" class="absolute inset-0 bg-textMain/60 backdrop-blur-md z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+            <div class="bg-white w-[85%] rounded-[32px] p-6 shadow-floating transform scale-95 transition-transform duration-300 relative overflow-hidden" id="modalContent">
+                
+                <!-- خط أحمر علوي للزينة -->
+                <div class="absolute top-0 left-0 right-0 h-2 bg-danger"></div>
+                
+                <div class="w-20 h-20 bg-red-50 text-danger rounded-full flex items-center justify-center text-4xl mx-auto mb-4 danger-pulse">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                
+                <h3 class="text-xl font-bold text-center text-textMain mb-2">تدخل وقائي مطلوب!</h3>
+                <p class="text-center text-textMuted text-xs mb-6 leading-relaxed">
+                    النظام رصد ارتفاعاً حرجاً ومفاجئاً قد يؤدي لتشكل خثرة. 
+                    <br><br>
+                    <span class="font-bold text-textMain">الرجاء إعطاء الإذن لضخ جرعة ميكروية (0.5mg) من مضاد التخثر للحماية مؤقتاً.</span>
+                </p>
+                
+                <!-- البصمة للتأكيد -->
+                <button onclick="giveDose()" class="w-full bg-danger hover:bg-red-600 text-white font-bold py-3.5 rounded-2xl mb-3 shadow-[0_10px_20px_rgba(255,107,107,0.3)] flex items-center justify-center gap-2 transition-all active:scale-95">
+                    <i class="fa-solid fa-fingerprint text-lg"></i> تصريح بالحقن الآلي
+                </button>
+                <button onclick="closeModal()" class="w-full bg-appBg text-textMain font-bold py-3.5 rounded-2xl text-sm transition-colors hover:bg-gray-200">إلغاء والاتصال بالطوارئ</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= LOGIC & JAVASCRIPT ================= -->
+    <script>
+        // 1. نظام التنقل بين الشاشات
+        function switchTab(screenId, navId) {
+            // إخفاء كل الشاشات
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            // إظهار الشاشة المطلوبة
+            document.getElementById(screenId).classList.add('active');
+            
+            // إزالة اللون النشط من كل الأزرار السفلية
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            // إذا لم يكن زر المنتصف، قم بتفعيله
+            if(navId !== 'nav-scan') {
+                document.getElementById(navId).classList.add('active');
+            }
+        }
+
+        // 2. إعداد الرسم البياني المتقدم
+        let mainChart;
+        function initChart() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            
+            // إنشاء تدرج لوني جميل تحت الخط (مثل الصورة)
+            let gradient = ctx.createLinearGradient(0, 0, 0, 150);
+            gradient.addColorStop(0, 'rgba(138, 116, 249, 0.2)');
+            gradient.addColorStop(1, 'rgba(138, 116, 249, 0)');
+
+            mainChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['2 pm', '3 pm', '4 pm', '5 pm', 'Now'],
+                    datasets: [{
+                        label: 'D-dimer',
+                        data: [210, 250, 180, 280, 240], // بيانات عشوائية محاكية للصورة
+                        borderColor: '#8a74f9',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#8a74f9',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        tension: 0.4, // لجعل الخط منحني وناعم
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: {
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { color: '#9a94a8', font: { family: 'Poppins', size: 10 } }
+                        },
+                        y: {
+                            grid: { color: '#ebe7ff', borderDash: [5, 5], drawBorder: false },
+                            ticks: { display: false, min: 100, max: 800 }
+                        }
+                    },
+                    layout: { padding: { left: -10, bottom: -10 } }
+                }
+            });
+            // إضافة نقطة صفراء للنهاية كما في الصورة
+            mainChart.data.datasets[0].pointBackgroundColor = (context) => {
+                return context.dataIndex === 4 ? '#f9d85e' : '#ffffff';
+            };
+            mainChart.data.datasets[0].pointBorderColor = (context) => {
+                return context.dataIndex === 4 ? '#ffffff' : '#8a74f9';
+            };
+            mainChart.update();
+        }
+
+        // تهيئة الرسم البياني عند تحميل الصفحة
+        initChart();
+
+        // 3. نظام محاكاة الهاكاثون (تحول الحالة من آمن إلى خطر)
+        let simInterval;
+        let currentValue = 240;
+
+        function triggerEmergency() {
+            const btn = document.getElementById('demoBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري مراقبة ارتفاع المؤشرات...';
+            
+            let step = 0;
+            
+            simInterval = setInterval(() => {
+                step++;
+                currentValue += Math.floor(Math.random() * 80) + 40; // زيادة سريعة
+                
+                // تحديث الأرقام
+                document.getElementById('mainDdimer').innerText = currentValue;
+                document.getElementById('chartValue').innerText = currentValue;
+                
+                // تحديث الرسم البياني
+                mainChart.data.datasets[0].data.shift();
+                mainChart.data.datasets[0].data.push(currentValue);
+                mainChart.update();
+
+                // المرحلة 1: تحذير أولي (برتقالي/أصفر)
+                if(step === 2) {
+                    updateUIState('warning');
+                }
+                // المرحلة 2: خطر حقيقي (أحمر)
+                else if(step >= 4) {
+                    clearInterval(simInterval);
+                    updateUIState('danger');
+                    setTimeout(() => { showModal(); }, 800); // إظهار نافذة التدخل
+                }
+                
+            }, 1000);
+        }
+
+        function updateUIState(state) {
+            // تعريف العناصر المراد تغيير لونها
+            const cIconBg = document.getElementById('centerIconBg');
+            const cIconBorder = document.getElementById('centerIconBorder');
+            const cIcon = document.getElementById('centerIcon');
+            const cCheck = document.getElementById('centerCheck');
+            const aTitle = document.getElementById('analysisTitle');
+            const cLabel = document.getElementById('chartLabel');
+            
+            if(state === 'warning') {
+                cIconBg.className = "w-24 h-24 bg-[#fff4de] rounded-full flex items-center justify-center transition-all duration-500";
+                cIconBorder.className = "w-32 h-32 mx-auto rounded-full flex items-center justify-center relative z-10 border-[3px] border-dashed border-accentYellow transition-all duration-500";
+                cIcon.className = "fa-solid fa-arrow-trend-up text-5xl text-accentYellow transition-colors duration-500";
+                cCheck.style.opacity = '0';
+                aTitle.innerText = "Rising Activity";
+                aTitle.className = "text-xl font-bold mt-4 text-accentYellow transition-colors duration-500";
+                cLabel.innerHTML = 'Warning level! <i class="fa-solid fa-arrow-trend-up text-xs"></i>';
+                cLabel.className = "text-accentYellow font-bold text-sm mt-1 transition-colors duration-500";
+            }
+            else if(state === 'danger') {
+                cIconBg.className = "w-24 h-24 bg-red-50 rounded-full flex items-center justify-center transition-all duration-500 danger-pulse";
+                cIconBorder.className = "w-32 h-32 mx-auto rounded-full flex items-center justify-center relative z-10 border-[3px] border-dashed border-danger transition-all duration-500";
+                cIcon.className = "fa-solid fa-triangle-exclamation text-5xl text-danger transition-colors duration-500";
+                aTitle.innerText = "Critical Risk!";
+                aTitle.className = "text-xl font-bold mt-4 text-danger transition-colors duration-500";
+                cLabel.innerHTML = 'Pre-thrombotic state! <i class="fa-solid fa-radiation text-xs"></i>';
+                cLabel.className = "text-danger font-bold text-sm mt-1 transition-colors duration-500";
+                
+                // تغيير لون خط الرسم البياني للأحمر
+                mainChart.data.datasets[0].borderColor = '#ff6b6b';
+                let newGrad = mainChart.ctx.createLinearGradient(0, 0, 0, 150);
+                newGrad.addColorStop(0, 'rgba(255, 107, 107, 0.2)');
+                newGrad.addColorStop(1, 'rgba(255, 107, 107, 0)');
+                mainChart.data.datasets[0].backgroundColor = newGrad;
+                mainChart.update();
+            }
+        }
+
+        // 4. نظام نوافذ التنبيه (Modals)
+        const modal = document.getElementById('alertModal');
+        const modalContent = document.getElementById('modalContent');
+
+        function showModal() {
+            modal.classList.remove('hidden');
+            // تأخير بسيط لتشغيل الأنيميشن
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+            }, 50);
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function giveDose() {
+            // محاكاة إعطاء الجرعة وتغيير الواجهة للنجاح
+            modalContent.innerHTML = `
+                <div class="text-center py-6">
+                    <div class="w-20 h-20 bg-[#e6f9ed] rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fa-solid fa-check text-4xl text-[#10b981]"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-textMain">تم الحقن بنجاح</h2>
+                    <p class="text-xs text-textMuted mt-2 leading-relaxed">
+                        تم ضخ 0.5mg بأمان. مؤشرات التخثر تستقر الآن. <br>تم إرسال تقرير فوري للطبيب المعالج.
+                    </p>
+                    <button onclick="closeModal()" class="mt-6 w-full bg-appBg text-textMain font-bold py-3.5 rounded-2xl transition-colors hover:bg-gray-200">إغلاق</button>
+                </div>
+            `;
+            
+            // إعادة تعيين زر الهاكاثون
+            const btn = document.getElementById('demoBtn');
+            btn.innerHTML = '<i class="fa-solid fa-rotate-right text-primary"></i> إعادة ضبط النظام';
+            btn.disabled = false;
+            btn.onclick = () => location.reload();
+        }
+    </script>
+</body>
+</html>
