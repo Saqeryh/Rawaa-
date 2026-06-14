@@ -134,12 +134,35 @@
             background-color: #ebe7ff;
             z-index: 0;
         }
+
+        /* انيميشن لوجو شاشة البداية */
+        @keyframes floatLogo {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float {
+            animation: floatLogo 3s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="text-textMain antialiased">
 
     <div class="mobile-wrapper">
-        
+        <div id="splashScreen" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-gradient-to-br from-primary to-[#7056e6] transition-opacity duration-700">
+
+            <div class="w-90 h-90 mb-6 animate-float">
+                <img src="C:\Users\Saqer\Downloads\rawaa.png" alt="شعار رواء" class="w-full h-full object-contain drop-shadow-2xl">
+            </div>
+
+            <h1 class="text-5xl font-extrabold text-white mb-2 tracking-wide font-sans drop-shadow-md">رَواء</h1>
+            <p class="text-primaryLight text-sm tracking-widest font-num font-semibold">RAWA | ThrombiX</p>
+
+            <div class="absolute bottom-12 flex flex-col items-center">
+                <i class="fa-solid fa-circle-notch fa-spin text-white text-3xl mb-3 opacity-90"></i>
+                <span class="text-white text-xs opacity-75 font-semibold">جاري تهيئة النظام والمستشعرات...</span>
+            </div>
+        </div>
         <div class="flex-1 overflow-y-auto no-scrollbar pt-12 pb-24 px-5 relative">
             
             <div id="screen-home" class="screen active">
@@ -148,7 +171,7 @@
                         <img alt="User" class="w-full h-full object-cover" src="https://placehold.co/100x100/8a74f9/ffffff?text=A">
                     </div>
                     <div class="text-center">
-                        <p class="font-bold text-lg font-num text-textMain" dir="ltr">11 يونيو 2026</p>
+                        <p class="font-bold text-lg font-num text-textMain" dir="ltr">12 يونيو 2026</p>
                     </div>
                     <div class="w-10 h-10 flex items-center justify-center text-textMain text-xl relative">
                         <i class="fa-regular fa-bell"></i>
@@ -347,7 +370,7 @@
                     <div class="flex items-center justify-between py-2 border-b border-appBg">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 bg-primaryLight rounded-full flex justify-center items-center text-primary"><i class="fa-solid fa-user-doctor text-xs"></i></div>
-                            <div><p class="text-sm font-semibold">د. نوف</p><p class="text-[10px] text-textMuted">الطبيب المشرف</p></div>
+                            <div><p class="text-sm font-semibold">د. محمد</p><p class="text-[10px] text-textMuted">الطبيب المشرف</p></div>
                         </div>
                         <i class="fa-regular fa-comment-dots text-primary cursor-pointer hover:bg-appBg p-2 rounded-full"></i>
                     </div>
@@ -355,7 +378,7 @@
                     <div class="flex items-center justify-between py-2 border-b border-appBg">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 bg-red-50 rounded-full flex justify-center items-center text-danger"><i class="fa-solid fa-truck-medical text-xs"></i></div>
-                            <div><p class="text-sm font-semibold">د. سرى</p><p class="text-[10px] text-textMuted">طبيب الطوارئ والتدخل</p></div>
+                            <div><p class="text-sm font-semibold">د. احمد</p><p class="text-[10px] text-textMuted">طبيب الطوارئ والتدخل</p></div>
                         </div>
                         <i class="fa-solid fa-phone text-danger cursor-pointer hover:bg-red-100 p-2 rounded-full"></i>
                     </div>
@@ -363,7 +386,7 @@
                     <div class="flex items-center justify-between py-2">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 bg-[#fff4de] rounded-full flex justify-center items-center text-accentYellow"><i class="fa-solid fa-file-medical text-xs"></i></div>
-                            <div><p class="text-sm font-semibold">الأخصائية وعد</p><p class="text-[10px] text-textMuted">مسؤولة السجلات</p></div>
+                            <div><p class="text-sm font-semibold">الأخصائية سارة</p><p class="text-[10px] text-textMuted">مسؤولة السجلات</p></div>
                         </div>
                     </div>
                 </div>
@@ -510,6 +533,18 @@
     </div>
 
     <script>
+        // إزالة شاشة البداية بعد 3 ثوانٍ
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splashScreen');
+                splash.classList.add('opacity-0');
+                splash.classList.add('pointer-events-none');
+                setTimeout(() => {
+                    splash.classList.add('hidden');
+                }, 700);
+            }, 3000);
+        });
+
         function switchTab(screenId, navId) {
             document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
@@ -561,7 +596,7 @@
                             ticks: { display: false, min: 100, max: 800 }
                         }
                     },
-                    layout: { padding: { right: -10, bottom: -10 } } // Adjusted for RTL
+                    layout: { padding: { right: -10, bottom: -10 } }
                 }
             });
             mainChart.data.datasets[0].pointBackgroundColor = (context) => {
@@ -585,6 +620,7 @@
             
             let step = 0;
             
+            // تم تغيير الفاصل الزمني من 1000 إلى 2500 ملي ثانية (2.5 ثانية) ليكون التغيير أبطأ
             simInterval = setInterval(() => {
                 step++;
                 currentValue += Math.floor(Math.random() * 80) + 40;
@@ -605,7 +641,7 @@
                     setTimeout(() => { showModal(); }, 800);
                 }
                 
-            }, 1000);
+            }, 2500); 
         }
 
         function updateUIState(state) {
